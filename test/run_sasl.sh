@@ -1,11 +1,19 @@
 #!/bin/sh
 
 if [[ -z $SLAPD ]] ; then
-  SLAPD=/usr/local/libexec/slapd
+  if [ -f /usr/local/libexec/slapd ] ; then
+    SLAPD=/usr/local/libexec/slapd
+  else
+    SLAPD=slapd
+  fi
 fi
 
 if [[ -z $SLAPADD ]] ; then
-  SLAPADD=/usr/local/sbin/slapadd
+  if [ -f /usr/local/sbin/slapadd ] ; then
+    SLAPADD=/usr/local/sbin/slapadd
+  else
+    SLAPADD=slapadd
+  fi
 fi
 
 if [[ -z $SLAPD_CONF ]] ; then

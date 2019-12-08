@@ -62,7 +62,7 @@ void LDAPCnx::New(const Nan::FunctionCallbackInfo<Value>& info) {
     int debug           = info[5]->NumberValue();
     int verifycert      = info[6]->NumberValue();
     int referrals       = info[7]->NumberValue();
-    Nan:Utf8String        cacertfile(info[8]);
+    Nan::Utf8String        cacertfile(info[8]);
     int zero            = 0;
 
     ld->ldap_callback = (ldap_conncb *)malloc(sizeof(ldap_conncb));
@@ -78,7 +78,7 @@ void LDAPCnx::New(const Nan::FunctionCallbackInfo<Value>& info) {
     struct timeval ntimeout = { timeout/1000, (timeout%1000) * 1000 };
 
     if (!info[8]->IsUndefined())
-      ldap_set_option (ldap_cnx->ld, LDAP_OPT_X_TLS_CACERTFILE, *cacertfile);
+      ldap_set_option (ld->ld, LDAP_OPT_X_TLS_CACERTFILE, *cacertfile);
     ldap_set_option(ld->ld, LDAP_OPT_PROTOCOL_VERSION,   &ver);
     ldap_set_option(NULL,   LDAP_OPT_DEBUG_LEVEL,        &debug);
     ldap_set_option(ld->ld, LDAP_OPT_CONNECT_CB,         ld->ldap_callback);
