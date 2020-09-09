@@ -1,0 +1,63 @@
+From 0ccfe71ff2193eaecd6018a0203d3b95575e3f72 Mon Sep 17 00:00:00 2001
+From: Joshua Houghton <joshua.houghton@ripjar.com>
+Date: Sat, 22 Aug 2020 14:49:58 +0100
+Subject: [PATCH] fix implicit declaration of function
+ 'ldap_pvt_tls_check_hostname'
+
+---
+ libraries/libldap/tls2.c | 32 ++++++++++++++++----------------
+ 1 file changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/libraries/libldap/tls2.c b/libraries/libldap/tls2.c
+index ebe5bf125..e721e5c92 100644
+--- a/libraries/libldap/tls2.c
++++ b/libraries/libldap/tls2.c
+@@ -315,6 +315,22 @@ update_flags( Sockbuf *sb, tls_session * ssl, int rc )
+ 	return tls_imp->ti_session_upflags( sb, ssl, rc );
+ }
+ 
++int
++ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
++{
++	tls_session *session = s;
++
++	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER &&
++	    ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_ALLOW) {
++		ld->ld_errno = tls_imp->ti_session_chkhost( ld, session, name_in );
++		if (ld->ld_errno != LDAP_SUCCESS) {
++			return ld->ld_errno;
++		}
++	}
++
++	return LDAP_SUCCESS;
++}
++
+ /*
+  * Call this to do a TLS connect on a sockbuf. ctx_arg can be
+  * a SSL_CTX * or NULL, in which case the default ctx is used.
+@@ -503,22 +519,6 @@ ldap_pvt_tls_get_peer_dn( void *s, struct berval *dn,
+ 	return rc;
+ }
+ 
+-int
+-ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
+-{
+-	tls_session *session = s;
+-
+-	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER &&
+-	    ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_ALLOW) {
+-		ld->ld_errno = tls_imp->ti_session_chkhost( ld, session, name_in );
+-		if (ld->ld_errno != LDAP_SUCCESS) {
+-			return ld->ld_errno;
+-		}
+-	}
+-
+-	return LDAP_SUCCESS;
+-}
+-
+ int
+ ldap_int_tls_config( LDAP *ld, int option, const char *arg )
+ {
+-- 
+2.24.3 (Apple Git-128)
+

@@ -1,0 +1,81 @@
+Sometimes the system can use a different version of openssl to the one node
+is statically linked against. To save building openssl and openldap and to
+remove the dependancy on openldap this project provides static libraries in
+which you can link against.
+
+How to compile these static libraries
+-------------------------------------
+
+Compiling for linux
+-------------------
+
+* Pick your linux distribution of choice
+* clone https://github.com/jjhoughton/napi-ldap.git i'm using
+  commit 34c80a4f20cbce2189e2886dfb880b5c264b88f4 at the time of writing. If you
+  already have it cloned run "git clean -xdf" to make sure you're starting from
+  a blank slate.
+* make sure you're using node 10 or above and run "BUILD_OPENLDAP=1 yarn" I had
+  to remove segfault-handler from package.json when building on centos 6 and
+  also had to install the sasl dependancy like so "sudo yum install cyrus-sasl*"
+* This should generate two files:
+  - deps/openldap-2.4.50/libraries/libldap/libldap.a
+  - deps/openldap-2.4.50/libraries/liblber/liblber.a
+  You'll need to copy these files into this directory and modify binding.gyp
+  so it links to them.
+
+Compiling for osx
+-----------------
+
+* clone git@github.com:openssl/openssl.git i'm using the tag OpenSSL_1_1_1g
+  you *must* use version 1.1 if you're using node10 or above but really you
+  should checkout to whatever version node12 is using at the time.
+  Again if you already have it cloned run "git clean -xdf" so you're starting from
+  a blank slate.
+* cd openssl and run run "./Configure darwin64-x86_64-cc"
+* run "make -j12"
+* cd - and clone https://git.openldap.org/openldap/openldap.git if you already
+  have it cloned run "git clean -xdf"
+* checkout to OPENLDAP_REL_ENG_2_4_51 and apply the
+  deps/0001-fix-implicit-declaration-of-function-ldap_pvt_tls_ch.patch patch
+  found in this directory by first coping the patch to the openldap directory
+  then running
+  "git am 0001-fix-implicit-declaration-of-function-ldap_pvt_tls_ch.patch"
+  if you don't want to use  my patch you can checkout to OPENLDAP_REL_ENG_2_4_44
+  instead
+* run the following commands so that when you compile openldap it
+  builds with the correct version of openssl:
+  export CFLAGS=-I/Users/jjhough/development/openssl/include
+  export LIBRARY_PATH=/Users/jjhough/development/openssl
+  you're location for openssl will be different so be sure to change it to point
+  to the correct location
+* run "./configure --disable-slapd"
+  make sure you have the sasl stuff
+checking sasl/sasl.h usability... yes
+checking sasl/sasl.h presence... yes
+checking for sasl/sasl.h... yes
+checking sasl.h usability... no
+checking sasl.h presence... no
+checking for sasl.h... no
+checking for sasl_client_init in -lsasl2... yes
+checking Cyrus SASL library version... yes
+checking for sasl_version... yes
+* run "make -j12"
+* cd libraries/libldap and run:
+ar cru libldap.a .libs/bind.o .libs/open.o .libs/result.o .libs/error.o .libs/compare.o .libs/search.o .libs/controls.o .libs/messages.o .libs/references.o .libs/extended.o .libs/cyrus.o .libs/modify.o .libs/add.o .libs/modrdn.o .libs/delete.o .libs/abandon.o .libs/sasl.o .libs/gssapi.o .libs/sbind.o .libs/unbind.o .libs/cancel.o .libs/filter.o .libs/free.o .libs/sort.o .libs/passwd.o .libs/whoami.o .libs/getdn.o .libs/getentry.o .libs/getattr.o .libs/getvalues.o .libs/addentry.o .libs/request.o .libs/os-ip.o .libs/url.o .libs/pagectrl.o .libs/sortctrl.o .libs/vlvctrl.o .libs/init.o .libs/options.o .libs/print.o .libs/string.o .libs/util-int.o .libs/schema.o .libs/charray.o .libs/os-local.o .libs/dnssrv.o .libs/utf-8.o .libs/utf-8-conv.o .libs/tls2.o .libs/tls_o.o .libs/tls_g.o .libs/tls_m.o .libs/turn.o .libs/ppolicy.o .libs/dds.o .libs/txn.o .libs/ldap_sync.o .libs/stctrl.o .libs/assertion.o .libs/deref.o .libs/ldif.o .libs/fetch.o .libs/version.o
+* copy libldap.a into the OSX directory inside node-ldap/deps/
+
+* cd libraries/liblber and run:
+  ar cru liblber.a .libs/assert.o .libs/decode.o .libs/encode.o .libs/io.o .libs/bprint.o .libs/debug.o .libs/memory.o .libs/options.o .libs/sockbuf.o .libs/stdio.o .libs/version.o
+* copy liblber.a into the OSX directory inside node-ldap/deps/
+
+Notes on running yarn on this project on centos6
+------------------------------------------------
+
+In order to get node-LDAP to compile i had to do
+install ripjar-python-3.7 and update the path variable to point to the bin dir
+sudo yum install centos-release-scl-rh
+sudo yum-config-manager --enable centos-sclo-rh-testing
+sudo yum install centos-release-scl-rh
+sudo yum install devtoolset-8
+source /opt/rh/devtoolset-8/enable
+yarn
