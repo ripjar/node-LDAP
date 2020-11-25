@@ -35,9 +35,13 @@
                     }, {
                       "libraries": [ "../deps/OSX/libldap.a", "../deps/OSX/liblber.a" ],
                     }
-                  ]],
+                  ], [
+		      "SASL==\"y\"", {
+			  "libraries": [ "-lsasl2" ]
+		      }
+		  ]],
                   "include_dirs": [ "deps/include" ],
-                  "libraries": [ "-lresolv", "-lsasl2" ]
+                  "libraries": [ "-lresolv" ]
 		}, {
 		    "libraries": [ "-lldap" ]
 		}]
